@@ -1,103 +1,399 @@
-import Image from "next/image";
+"use client";
+import { useState, FormEvent } from "react";
+import { FormContent } from './components/FormContent';
+import { ChevronDown } from './components/icons/ChevronDown';
+import { FinancialChart } from './components/FinancialChart';
+import { AiInput } from './components/AiInput';
+import { SparklesIcon } from "./components/icons/SparklesIcon";
+import ResponseModal from './components/ResponseModal';
+
+type SortDirection = "asc" | "desc" | null;
+type SortField = "date" | "cashOnHand" | "cashBurn" | "monthlyRevenue" | null;
+
+interface FinancialData {
+  date: string;
+  cashOnHand: number;
+  cashBurn: number;
+  monthlyRevenue: number;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const [newEntry, setNewEntry] = useState<FinancialData>({
+    date: "",
+    cashOnHand: 0,
+    cashBurn: 0,
+    monthlyRevenue: 0,
+  });
+  const [error, setError] = useState("");
+  const [isFormCollapsed, setIsFormCollapsed] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 6;
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [financialData, setFinancialData] = useState<FinancialData[]>([
+    {
+      date: "Mar 01 2024",
+      cashOnHand: 485000, // After Series A funding round
+      cashBurn: 385000, // Growing team, increased marketing spend
+      monthlyRevenue: 210000, // ~2.5M ARR
+    },
+    {
+      date: "Feb 03 2024",
+      cashOnHand: 512500,
+      cashBurn: 375000,
+      monthlyRevenue: 195000,
+    },
+    {
+      date: "Jan 06 2024",
+      cashOnHand: 540000,
+      cashBurn: 360000,
+      monthlyRevenue: 182000,
+    },
+    {
+      date: "Dec 2, 2023",
+      cashOnHand: 565000,
+      cashBurn: 340000,
+      monthlyRevenue: 170000,
+    },
+    {
+      date: "Nov 4, 2023",
+      cashOnHand: 590000,
+      cashBurn: 320000,
+      monthlyRevenue: 155000,
+    },
+    {
+      date: "Oct 3, 2023",
+      cashOnHand: 615000,
+      cashBurn: 300000,
+      monthlyRevenue: 142000,
+    },
+    {
+      date: "Sep 9, 2023",
+      cashOnHand: 85000,
+      cashBurn: 280000,
+      monthlyRevenue: 130000,
+    },
+    {
+      date: "Aug 8, 2023",
+      cashOnHand: 105000,
+      cashBurn: 265000,
+      monthlyRevenue: 118000,
+    },
+    {
+      date: "Jul 2, 2023",
+      cashOnHand: 125000,
+      cashBurn: 250000,
+      monthlyRevenue: 105000,
+    },
+    {
+      date: "Jun 1, 2023",
+      cashOnHand: 145000, 
+      cashBurn: 235000,
+      monthlyRevenue: 92000,
+    }
+  ]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : sortDirection === "desc" ? null : "asc");
+      setSortField(sortDirection === "desc" ? null : field);
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const getSortedData = () => {
+    if (!sortField || !sortDirection) return financialData;
+
+    return [...financialData].sort((a, b) => {
+      const multiplier = sortDirection === "asc" ? 1 : -1;
+      return a[sortField] > b[sortField] ? multiplier : -multiplier;
+    });
+  };
+
+  const paginatedData = () => {
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const sortedData = getSortedData();
+    return sortedData.slice(startIndex, startIndex + rowsPerPage);
+  };
+
+  const totalPages = Math.ceil(financialData.length / rowsPerPage);
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    
+    // Validate the form data
+    if (!newEntry.date || newEntry.cashOnHand <= 0) {
+      setError("Please fill in all fields");
+      return; // Basic validation
+    }
+    
+    setError(""); // Reset
+
+    // Add the new entry to the state
+    setFinancialData(prevData => [newEntry, ...prevData]);
+    
+    // Reset the form
+    setNewEntry({
+      date: "",
+      cashOnHand: 0,
+      cashBurn: 0,
+      monthlyRevenue: 0,
+    });
+    
+    // Return to the first page to see the new entry
+    setCurrentPage(1);
+  };
+
+  const handleAiSubmit = (query: string) => {
+    // Call OpenAI API
+    fetch('/api/openaiChat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt: query, financialData: financialData }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        // Handle the response
+        setAiResponse(data.message);
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  };
+
+  const closeModal = () => {
+    setAiResponse(null);
+  };
+
+  return (
+    <main className="min-h-screen bg-offWhite text-black p-10">
+      <ResponseModal message={aiResponse || ''} isOpen={!!aiResponse} onClose={closeModal} />
+      <div className="flex flex-col lg:flex-row space-x-6 space-y-4 items-center">
+        <h1 className="text-4xl font-bold text-brandPurple line-clamp-1">Cerebro-demo</h1>
+        <div className="w-full max-w-[500px]">
+          <AiInput className="w-full" onSubmit={handleAiSubmit} />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      </div>
+
+      <div className="mb-6 mt-4">
+        <h1 className="text-2xl font-semibold text-gray-800">Portfolio Value</h1>
+        <div className="text-5xl font-bold text-gray-900 mt-2">
+          {new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }).format(financialData[0]?.cashOnHand || 0)}
+        </div>
+      </div>
+      
+      {/* Mobile Form (shown above table) */}
+      <div className="lg:hidden mb-6">
+        <button
+          onClick={() => setIsFormCollapsed(!isFormCollapsed)}
+          className="w-full bg-white rounded-lg shadow-lg p-4 flex justify-between items-center text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          <span className="font-semibold">Add New Entry</span>
+          <ChevronDown 
+            className={`w-5 h-5 transition-transform duration-200 ${
+              isFormCollapsed ? '' : 'rotate-180'
+            }`}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        </button>
+
+        {/* Collapsible Form */}
+        <div className={`transition-all duration-200 ease-in-out ${isFormCollapsed ? 'max-h-0 overflow-hidden' : 'max-h-[600px] mt-4'}`}>
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <FormContent newEntry={newEntry} setNewEntry={setNewEntry} handleSubmit={handleSubmit} />
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="flex gap-8">
+      {/* Desktop Form Section */}
+        <div className="hidden lg:flex w-[21%] flex-col">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="h-[480px]">
+              <FormContent newEntry={newEntry} setNewEntry={setNewEntry} handleSubmit={handleSubmit} error={error} />
+            </div>
+          </div>
+        </div>
+        
+        {/* Table Section */}
+        <div className="w-full lg:w-[75%] flex flex-col">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th 
+                    className="px-6 py-4 text-left text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("date")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Date
+                      {sortField === "date" && (
+                        <span className="text-[#776FCB]">
+                          {sortDirection === "asc" ? "↑" : "↓"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-4 text-left text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("cashOnHand")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Cash on Hand
+                      {sortField === "cashOnHand" && (
+                        <span className="text-[#776FCB]">
+                          {sortDirection === "asc" ? "↑" : "↓"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-4 text-left text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("cashBurn")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Monthly Burn
+                      {sortField === "cashBurn" && (
+                        <span className="text-[#776FCB]">
+                          {sortDirection === "asc" ? "↑" : "↓"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-4 text-left text-sm font-semibold text-gray-600 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort("monthlyRevenue")}
+                  >
+                    <div className="flex items-center gap-2">
+                      Monthly Revenue (MRR)
+                      {sortField === "monthlyRevenue" && (
+                        <span className="text-[#776FCB]">
+                          {sortDirection === "asc" ? "↑" : "↓"}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedData().map((row, index) => (
+                  <tr 
+                    key={row.date}
+                    className={`
+                      border-b border-gray-50 hover:bg-gray-50 transition-colors
+                      ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}
+                    `}
+                  >
+                    <td className="px-6 py-5 text-sm text-gray-600">{row.date}</td>
+                    <td className="px-6 py-5 text-sm text-gray-600">
+                      {formatCurrency(row.cashOnHand)}
+                    </td>
+                    <td className="px-6 py-5 text-sm text-gray-600">
+                      {formatCurrency(row.cashBurn)}
+                    </td>
+                    <td className="px-6 py-5 text-sm text-gray-600">
+                      {formatCurrency(row.monthlyRevenue)}
+                    </td>
+                  </tr>
+                ))}
+                
+                {/* Add empty rows to maintain consistent table height */}
+                {paginatedData().length < rowsPerPage && Array(rowsPerPage - paginatedData().length).fill(0).map((_, index) => (
+                  <tr 
+                    key={`empty-${index}`}
+                    className={`border-b border-gray-50 h-[61px] ${(paginatedData().length + index) % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}`}
+                  >
+                    <td className="px-6 py-5"></td>
+                    <td className="px-6 py-5"></td>
+                    <td className="px-6 py-5"></td>
+                    <td className="px-6 py-5"></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {/* Pagination */}
+            <div className="flex bg-gray-50 justify-between items-center px-6 py-3 border-t border-gray-100">
+              <div className="text-sm text-gray-500">
+                Showing {Math.min((currentPage - 1) * rowsPerPage + 1, financialData.length)} to {Math.min(currentPage * rowsPerPage, financialData.length)} of {financialData.length} entries
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-1.5 rounded-lg flex items-center justify-center ${
+                    currentPage === 1
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="ml-1">Prev</span>
+                </button>
+                
+                {/* <span className="text-sm text-gray-600 font-medium">
+                  Page {currentPage} of {totalPages}
+                </span> */}
+                
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-1.5 rounded-lg flex items-center justify-center ${
+                    currentPage === totalPages
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <span className="mr-1">Next</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+        
+        </div>
+
+      </div>
+
+        {/* Add Chart Below Table */}
+        <FinancialChart data={financialData} />
+    </main>
   );
 }
