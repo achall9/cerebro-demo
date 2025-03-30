@@ -26,5 +26,3 @@ export const SheetIcon = ({ className = "" }: { className?: string }) => (
     />
   </svg>
 );
-
-export default SheetIcon; 

@@ -1,11 +1,12 @@
 "use client";
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { FormContent } from './components/FormContent';
 import { ChevronDown } from './components/icons/ChevronDown';
 import { FinancialChart } from './components/FinancialChart';
 import { AiInput } from './components/AiInput';
 import { SparklesIcon } from "./components/icons/SparklesIcon";
 import ResponseModal from './components/ResponseModal';
+import { format } from "date-fns";
 
 type SortDirection = "asc" | "desc" | null;
 type SortField = "date" | "cashOnHand" | "cashBurn" | "monthlyRevenue" | null;
@@ -31,22 +32,23 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 6;
   const [aiResponse, setAiResponse] = useState<string | null>(null);
-
+  const [didSucceed, setDidSucceed] = useState(false);
+  const [isAiLoading, setIsAiLoading] = useState(false);
   const [financialData, setFinancialData] = useState<FinancialData[]>([
     {
-      date: "Mar 01 2024",
+      date: "Mar 1 2024",
       cashOnHand: 485000, // After Series A funding round
       cashBurn: 385000, // Growing team, increased marketing spend
       monthlyRevenue: 210000, // ~2.5M ARR
     },
     {
-      date: "Feb 03 2024",
+      date: "Feb 3 2024",
       cashOnHand: 512500,
       cashBurn: 375000,
       monthlyRevenue: 195000,
     },
     {
-      date: "Jan 06 2024",
+      date: "Jan 6 2024",
       cashOnHand: 540000,
       cashBurn: 360000,
       monthlyRevenue: 182000,
@@ -147,15 +149,18 @@ export default function Home() {
     e.preventDefault();
     
     // Validate the form data
-    if (!newEntry.date || newEntry.cashOnHand <= 0) {
+    if (newEntry.cashOnHand <= 0 || newEntry.cashBurn <= 0 || newEntry.monthlyRevenue <= 0) {
       setError("Please fill in all fields");
       return; // Basic validation
     }
     
-    setError(""); // Reset
-
+    setError(""); // Reset errors
+    
     // Add the new entry to the state
-    setFinancialData(prevData => [newEntry, ...prevData]);
+    setFinancialData(prevData => [{
+      ...newEntry,
+      date: newEntry.date || format(new Date(), 'MMM d, yyyy')
+    }, ...prevData]);
     
     // Reset the form
     setNewEntry({
@@ -164,13 +169,24 @@ export default function Home() {
       cashBurn: 0,
       monthlyRevenue: 0,
     });
+
+    setDidSucceed(true);
     
     // Return to the first page to see the new entry
     setCurrentPage(1);
   };
 
+  useEffect(() => {
+    if (didSucceed) {
+      setTimeout(() => {
+        setDidSucceed(false);
+      }, 3000);
+    }
+  }, [didSucceed]);
+
   const handleAiSubmit = (query: string) => {
     // Call OpenAI API
+    setIsAiLoading(true);
     fetch('/api/openaiChat', {
       method: 'POST',
       headers: {
@@ -180,11 +196,13 @@ export default function Home() {
     })
       .then((res) => res.json())
       .then((data) => {
-        // Handle the response
         setAiResponse(data.message);
       })
       .catch((error) => {
-        console.error('Error:', error);
+        console.error('Error:', error); 
+      })
+      .finally(() => {
+        setIsAiLoading(false);
       });
   };
 
@@ -198,7 +216,7 @@ export default function Home() {
       <div className="flex flex-col lg:flex-row space-x-6 space-y-4 items-center">
         <h1 className="text-4xl font-bold text-brandPurple line-clamp-1">Cerebro-demo</h1>
         <div className="w-full max-w-[500px]">
-          <AiInput className="w-full" onSubmit={handleAiSubmit} />
+          <AiInput className="w-full" onSubmit={handleAiSubmit} isLoading={isAiLoading} />
         </div>
       </div>
 
@@ -220,7 +238,7 @@ export default function Home() {
           onClick={() => setIsFormCollapsed(!isFormCollapsed)}
           className="w-full bg-white rounded-lg shadow-lg p-4 flex justify-between items-center text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          <span className="font-semibold">Add New Entry</span>
+          <span className="font-semibold">Add New Metric</span>
           <ChevronDown 
             className={`w-5 h-5 transition-transform duration-200 ${
               isFormCollapsed ? '' : 'rotate-180'
@@ -231,7 +249,7 @@ export default function Home() {
         {/* Collapsible Form */}
         <div className={`transition-all duration-200 ease-in-out ${isFormCollapsed ? 'max-h-0 overflow-hidden' : 'max-h-[600px] mt-4'}`}>
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <FormContent newEntry={newEntry} setNewEntry={setNewEntry} handleSubmit={handleSubmit} />
+            <FormContent newEntry={newEntry} setNewEntry={setNewEntry} handleSubmit={handleSubmit} error={error} didSucceed={didSucceed} />
           </div>
         </div>
       </div>
@@ -242,7 +260,7 @@ export default function Home() {
         <div className="hidden lg:flex w-[21%] flex-col">
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <div className="h-[480px]">
-              <FormContent newEntry={newEntry} setNewEntry={setNewEntry} handleSubmit={handleSubmit} error={error} />
+              <FormContent newEntry={newEntry} setNewEntry={setNewEntry} handleSubmit={handleSubmit} error={error} didSucceed={didSucceed} />
             </div>
           </div>
         </div>
@@ -310,7 +328,7 @@ export default function Home() {
               <tbody>
                 {paginatedData().map((row, index) => (
                   <tr 
-                    key={row.date}
+                    key={index}
                     className={`
                       border-b border-gray-50 hover:bg-gray-50 transition-colors
                       ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'}

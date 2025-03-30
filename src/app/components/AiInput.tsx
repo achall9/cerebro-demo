@@ -2,13 +2,15 @@
 import { useState, useEffect } from "react";
 import { SparklesIcon } from "./icons/SparklesIcon";
 import { SearchIcon } from "./icons/SearchIcon";
+import { SpinnerIcon } from "./icons/SpinnerIcon";
 
 interface AiInputProps {
   className?: string;
   onSubmit: (query: string) => void;
+  isLoading: boolean;
 }
 
-export const AiInput = ({ className = "", onSubmit }: AiInputProps) => {
+export const AiInput = ({ className = "", onSubmit, isLoading }: AiInputProps) => {
   const [placeholder, setPlaceholder] = useState("");
   const [isTyping, setIsTyping] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
@@ -16,7 +18,8 @@ export const AiInput = ({ className = "", onSubmit }: AiInputProps) => {
   
   const phrases = [
     "Cerebro, how is my portfolio doing?",
-    "Cerebro, should I invest more here?"
+    "Cerebro, how much runway do we have?",
+    "Cerebro, what's the cash burn?",
   ];
   
   useEffect(() => {
@@ -67,13 +70,14 @@ export const AiInput = ({ className = "", onSubmit }: AiInputProps) => {
         className={`pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#776FCB]/20 focus:border-[#776FCB] ${className}`}
       />
       <button
+        disabled={isLoading}
         onClick={() => {
           onSubmit(query)
           setQuery("")
         }}
         className="absolute m-[0.5] inset-y-0 right-0 flex items-center bg-brandPurple text-white font-semibold py-2 px-5 rounded-full hover:bg-brandPurple/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brandPurple/50 focus:ring-offset-2"
       >
-        <SearchIcon className="w-5 h-5" />
+        {isLoading ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : <SearchIcon className="w-5 h-5" />}
       </button>
     </div>
   );

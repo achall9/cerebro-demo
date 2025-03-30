@@ -66,7 +66,7 @@ export function FinancialChart({ data }: FinancialChartProps) {
             maximumFractionDigits: 0,
           }).format(value)
         }
-        yAxisWidth={90}
+        yAxisWidth={80}
         showLegend={false}
         showXAxis={true}
         showYAxis={true}

@@ -8,6 +8,7 @@ interface FormContentProps {
   setNewEntry: (entry: FinancialData) => void;
   handleSubmit: (e: React.FormEvent) => void;
   error?: string;
+  didSucceed: boolean;
 }
 
 interface FinancialData {
@@ -17,10 +18,11 @@ interface FinancialData {
   monthlyRevenue: number;
 }
 
-export function FormContent({ newEntry, setNewEntry, handleSubmit, error }: FormContentProps) {
+export function FormContent({ newEntry, setNewEntry, handleSubmit, error, didSucceed }: FormContentProps) {
   const [isEmailCopyMode, setIsEmailCopyMode] = useState(false);
   const [emailCopy, setEmailCopy] = useState('');
-
+  const [aiError, setAiError] = useState('');
+  
   const toggleEmailCopyMode = () => {
     setIsEmailCopyMode(!isEmailCopyMode);
   };
@@ -35,9 +37,19 @@ export function FormContent({ newEntry, setNewEntry, handleSubmit, error }: Form
         body: JSON.stringify({ emailData: emailCopy }),
       });
       const data = await response.json();
-      setNewEntry({...newEntry, date: format(new Date(), 'MMM d, yyyy'), cashOnHand: Number(data.message.cashOnHand), monthlyRevenue: Number(data.message.monthlyRevenue), cashBurn: Number(data.message.cashBurn)});
+      // Parse the JSON string in data.message to get the actual object
+      const financialData = JSON.parse(data.message);
+      setNewEntry({
+        ...newEntry,
+        date: format(new Date(), 'MMM d, yyyy'),
+        cashOnHand: Number(financialData.cashOnHand) || 0,
+        monthlyRevenue: Number(financialData.monthlyRevenue) || 0,
+        cashBurn: Number(financialData.cashBurn) || 0
+      });
+      setEmailCopy('');
       setIsEmailCopyMode(false);
     } catch (error) {
+      setAiError('Error extracting data.');
       console.error('Error extracting data:', error);
     }
   };
@@ -57,7 +69,7 @@ export function FormContent({ newEntry, setNewEntry, handleSubmit, error }: Form
     <form onSubmit={isEmailCopyMode ? (e) => { e.preventDefault(); handleExtractData(); } : handleSubmit} className="space-y-4">
       <div className="flex bg-gray-50 px-4 py-4 justify-between items-center">
         <label className="block text-sm font-semibold text-gray-700">
-          {isEmailCopyMode ? 'Email Copy' : 'Add New Entry'}
+          {isEmailCopyMode ? 'Email Copy' : 'Add New Metric'}
         </label>
         <button
           type="button"
@@ -160,21 +172,27 @@ export function FormContent({ newEntry, setNewEntry, handleSubmit, error }: Form
       )}
       </div>
 
+   
     
-
-      {error && (
-         <div className="text-red-500 text-sm text-center px-4">
-           {error}
-         </div>
-      )}
-
       <div className="px-4">
       <button
         type="submit"
         className="w-full bg-[#776FCB] text-white py-2 rounded-lg hover:bg-[#776FCB]/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#776FCB]/50 focus:ring-offset-2"
       >
-        {isEmailCopyMode ? 'Extract Data' : 'Add Entry'}
+        {isEmailCopyMode ? 'Extract Metrics' : 'Add Metric'}
       </button>
+
+      {(error || aiError) && (
+         <div className="text-red-500 text-sm text-center px-4 py-3">
+           {error || aiError}
+         </div>
+      )}
+
+      {didSucceed && (
+        <div className="my-3 bg-green-100/70 text-green-700 text-sm text-center px-6 py-3 rounded-lg border border-green-200">
+          Metric added successfully!
+        </div>
+      )}
       </div>
 
     </form>
