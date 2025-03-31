@@ -220,7 +220,7 @@ export default function Home() {
           </div>
         </div>
   
-        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors lg:order-last order-first w-full max-w-[500px] lg:w-auto mb-3">
+        <button className="flex cursor-pointer items-center gap-2 px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors lg:order-last order-first w-full max-w-[500px] lg:w-auto mb-3">
             <span className="text-gray-700 font-medium line-clamp-1">Company ABC</span>
             <ChevronDown className="w-4 h-4 text-gray-500" />
         </button>

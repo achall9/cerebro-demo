@@ -176,7 +176,7 @@ export function FormContent({ newEntry, setNewEntry, handleSubmit, error, didSuc
       <div className="px-4">
       <button
         type="submit"
-        className="w-full bg-[#776FCB] text-white py-2 rounded-lg hover:bg-[#776FCB]/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#776FCB]/50 focus:ring-offset-2"
+        className="w-full cursor-pointer bg-[#776FCB] text-white py-2 rounded-lg hover:bg-[#776FCB]/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#776FCB]/50 focus:ring-offset-2"
       >
         {isEmailCopyMode ? 'Extract Metrics' : 'Add Metric'}
       </button>

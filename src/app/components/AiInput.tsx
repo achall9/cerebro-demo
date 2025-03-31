@@ -72,12 +72,12 @@ export const AiInput = ({ className = "", onSubmit, isLoading }: AiInputProps) =
         className={`pl-10 pr-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#776FCB]/20 focus:border-[#776FCB] ${className}`}
       />
       <button
-        disabled={isLoading}
+        disabled={isLoading || query.length === 0}
         onClick={() => {
           onSubmit(query)
           setQuery("")
         }}
-        className="absolute m-[0.5] inset-y-0 right-0 flex items-center bg-brandPurple text-white font-semibold py-2 px-5 rounded-full hover:bg-brandPurple/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brandPurple/50 focus:ring-offset-2"
+        className="absolute cursor-pointer m-[0.5] inset-y-0 right-0 flex items-center bg-brandPurple text-white font-semibold py-2 px-5 rounded-full hover:bg-brandPurple/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brandPurple/50 focus:ring-offset-2"
       >
         {isLoading ? <SpinnerIcon className="w-5 h-5 animate-spin" /> : <SearchIcon className="w-5 h-5" />}
       </button>
