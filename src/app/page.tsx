@@ -4,7 +4,6 @@ import { FormContent } from './components/FormContent';
 import { ChevronDown } from './components/icons/ChevronDown';
 import { FinancialChart } from './components/FinancialChart';
 import { AiInput } from './components/AiInput';
-import { SparklesIcon } from "./components/icons/SparklesIcon";
 import ResponseModal from './components/ResponseModal';
 import { format } from "date-fns";
 

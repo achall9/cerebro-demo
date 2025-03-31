@@ -1,5 +1,5 @@
 "use client";
-import { Card, Title, LineChart, AreaChart } from "@tremor/react";
+import { Card, AreaChart } from "@tremor/react";
 import { formatCurrency } from "../utils/formatter";
 
 interface FinancialData {

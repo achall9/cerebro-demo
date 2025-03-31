@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { format, parse } from 'date-fns';
-import { Calendar } from './icons/Calendar';
 import { SheetIcon } from './icons/SheetIcon';
 
 interface FormContentProps {
