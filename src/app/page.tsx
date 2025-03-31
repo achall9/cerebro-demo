@@ -212,22 +212,36 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-offWhite text-black p-10">
       <ResponseModal message={aiResponse || ''} isOpen={!!aiResponse} onClose={closeModal} />
-      <div className="flex flex-col lg:flex-row space-x-6 space-y-4 items-center">
-        <h1 className="text-4xl font-bold text-brandPurple line-clamp-1">Cerebro-demo</h1>
-        <div className="w-full max-w-[500px]">
-          <AiInput className="w-full" onSubmit={handleAiSubmit} isLoading={isAiLoading} />
+      <div className="flex flex-col lg:flex-row space-x-6 space-y-4 items-center justify-between">
+        <div className="flex flex-col lg:flex-row items-center gap-3 w-full max-w-[800px]">
+          <h1 className="text-4xl font-bold text-brandPurple line-clamp-1">Cerebro-demo</h1>
+          <div className="w-full max-w-[500px]">
+            <AiInput className="w-full" onSubmit={handleAiSubmit} isLoading={isAiLoading} />
+          </div>
         </div>
+  
+        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 hover:bg-gray-50 transition-colors lg:order-last order-first w-full max-w-[500px] lg:w-auto mb-3">
+            <span className="text-gray-700 font-medium line-clamp-1">Company ABC</span>
+            <ChevronDown className="w-4 h-4 text-gray-500" />
+        </button>
       </div>
 
       <div className="mb-6 mt-4">
         <h1 className="text-2xl font-semibold text-gray-800">Portfolio Value</h1>
-        <div className="text-5xl font-bold text-gray-900 mt-2">
-          {new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }).format(financialData[0]?.cashOnHand || 0)}
+        <div className="flex items-center gap-2">
+          <div className="text-5xl font-bold text-gray-900">
+            {new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD',
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(financialData[0]?.cashOnHand || 0)}
+          </div>
+          {financialData[1] && (
+            <div className={`text-2xl ${financialData[0].cashOnHand > financialData[1].cashOnHand ? 'text-green-500' : 'text-red-500'}`}>
+              {financialData[0].cashOnHand > financialData[1].cashOnHand ? '↑' : '↓'}
+            </div>
+          )}
         </div>
       </div>
       
