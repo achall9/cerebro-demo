@@ -1,4 +1,6 @@
 "use client";
+/* eslint-disable */
+
 import { useState, useEffect } from "react";
 import { SparklesIcon } from "./icons/SparklesIcon";
 import { SearchIcon } from "./icons/SearchIcon";

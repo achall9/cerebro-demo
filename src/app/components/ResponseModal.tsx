@@ -12,7 +12,7 @@ const ResponseModal: React.FC<ResponseModalProps> = ({ message, isOpen, onClose 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-100">
       <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
-        <h2 className="text-xl font-semibold mb-4">Cerebro's response</h2>
+        <h2 className="text-xl font-semibold mb-4">Cerebro&apos;s response</h2>
         <p className="mb-4">{message}</p>
         <button
           onClick={onClose}
